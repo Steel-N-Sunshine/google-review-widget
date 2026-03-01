@@ -1,0 +1,14 @@
+services:
+  reviews:
+    build: .
+    container_name: google-reviews-widget
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - reviews_data:/app/data
+    env_file:
+      - .env
+
+volumes:
+  reviews_data:

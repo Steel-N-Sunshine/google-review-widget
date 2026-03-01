@@ -1,0 +1,20 @@
+{
+  "name": "google-reviews-widget",
+  "version": "1.0.0",
+  "description": "Self-hosted Google Reviews widget with local review accumulation cache.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "google-reviews",
+    "widget",
+    "fastify",
+    "docker"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "fastify": "^5.6.1"
+  }
+}
