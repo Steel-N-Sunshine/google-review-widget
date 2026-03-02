@@ -14,6 +14,10 @@ function sortByPublishTimeDesc(a, b) {
   return bt - at;
 }
 
+function normalizeStoredReview(review, id) {
+  return { ...review, id };
+}
+
 async function loadFromDisk(filePath) {
   try {
     const raw = await fs.readFile(filePath, "utf8");
@@ -25,7 +29,11 @@ async function loadFromDisk(filePath) {
     return {
       rating: parsed.rating ?? null,
       totalReviews: parsed.totalReviews ?? null,
-      reviews: Array.isArray(parsed.reviews) ? parsed.reviews : [],
+      reviews: Array.isArray(parsed.reviews)
+        ? parsed.reviews
+          .filter((review) => review && typeof review === "object")
+          .map((review) => normalizeStoredReview(review, review.id || createReviewId(review.author, review.text)))
+        : [],
       totalCached: Number.isFinite(parsed.totalCached) ? parsed.totalCached : (Array.isArray(parsed.reviews) ? parsed.reviews.length : 0),
       lastUpdated: parsed.lastUpdated ?? null,
       lastPoll: parsed.lastPoll ?? null
@@ -53,13 +61,13 @@ function mergeReviews(existing = [], incoming = [], maxReviews = 50) {
   for (const review of existing) {
     if (!review || typeof review !== "object") continue;
     const id = review.id || createReviewId(review.author, review.text);
-    map.set(id, { ...review, id });
+    map.set(id, normalizeStoredReview(review, id));
   }
 
   for (const review of incoming) {
     if (!review || typeof review !== "object") continue;
     const id = review.id || createReviewId(review.author, review.text);
-    map.set(id, { ...review, id });
+    map.set(id, normalizeStoredReview(review, id));
   }
 
   const merged = Array.from(map.values()).sort(sortByPublishTimeDesc);

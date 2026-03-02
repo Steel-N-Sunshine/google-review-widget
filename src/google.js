@@ -1,50 +1,34 @@
 const { createReviewId } = require("./cache");
 
-const GOOGLE_BASE_URL = "https://places.googleapis.com/v1/places";
-const GOOGLE_FIELD_MASK = [
-  "id",
-  "displayName",
-  "rating",
-  "userRatingCount",
-  "reviews.rating",
-  "reviews.text.text",
-  "reviews.originalText.text",
-  "reviews.relativePublishTimeDescription",
-  "reviews.publishTime",
-  "reviews.authorAttribution.displayName",
-  "reviews.authorAttribution.uri",
-  "reviews.authorAttribution.photoUri"
-].join(",");
+const GOOGLE_LEGACY_PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json";
 
 function normalizeReview(review) {
-  const author = review?.authorAttribution?.displayName || "Anonymous";
-  const text = review?.text?.text || "";
-  const originalText = review?.originalText?.text || null;
+  const author = review?.author_name || "Anonymous";
+  const text = review?.text || "";
+  const unixTime = Number(review?.time);
+  const publishTime = Number.isFinite(unixTime) ? new Date(unixTime * 1000).toISOString() : null;
 
   return {
     id: createReviewId(author, text),
     author,
-    authorPhoto: review?.authorAttribution?.photoUri || null,
-    authorUrl: review?.authorAttribution?.uri || null,
+    authorPhoto: review?.profile_photo_url || null,
+    authorUrl: review?.author_url || null,
     rating: Number.isFinite(review?.rating) ? review.rating : null,
-    relativeTime: review?.relativePublishTimeDescription || null,
-    publishTime: review?.publishTime || null,
-    text,
-    originalText
+    publishTime,
+    text
   };
 }
 
 async function fetchGooglePlaceReviews({ apiKey, placeId, reviewsSort = "NEWEST" }) {
-  const sort = reviewsSort === "MOST_RELEVANT" ? "MOST_RELEVANT" : "NEWEST";
-  const url = new URL(`${GOOGLE_BASE_URL}/${encodeURIComponent(placeId)}`);
-  url.searchParams.set("reviewsSort", sort);
+  const sort = reviewsSort === "MOST_RELEVANT" ? "most_relevant" : "newest";
+  const url = new URL(GOOGLE_LEGACY_PLACE_DETAILS_URL);
+  url.searchParams.set("place_id", placeId);
+  url.searchParams.set("fields", "name,rating,user_ratings_total,reviews");
+  url.searchParams.set("reviews_sort", sort);
+  url.searchParams.set("key", apiKey);
 
   const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": GOOGLE_FIELD_MASK
-    }
+    method: "GET"
   });
 
   if (!response.ok) {
@@ -53,11 +37,17 @@ async function fetchGooglePlaceReviews({ apiKey, placeId, reviewsSort = "NEWEST"
   }
 
   const payload = await response.json();
-  const reviews = Array.isArray(payload.reviews) ? payload.reviews.map(normalizeReview) : [];
+
+  if (payload?.status && !["OK", "ZERO_RESULTS"].includes(payload.status)) {
+    throw new Error(`Google Places legacy API error (${payload.status}): ${payload.error_message || "no error message"}`);
+  }
+
+  const result = payload?.result || {};
+  const reviews = Array.isArray(result.reviews) ? result.reviews.map(normalizeReview) : [];
 
   return {
-    rating: Number.isFinite(payload.rating) ? payload.rating : null,
-    totalReviews: Number.isFinite(payload.userRatingCount) ? payload.userRatingCount : null,
+    rating: Number.isFinite(result.rating) ? result.rating : null,
+    totalReviews: Number.isFinite(result.user_ratings_total) ? result.user_ratings_total : null,
     reviews
   };
 }

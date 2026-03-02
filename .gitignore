@@ -7,3 +7,5 @@ pnpm-debug.log*
 dist/
 coverage/
 data/
+.development/
+test.html

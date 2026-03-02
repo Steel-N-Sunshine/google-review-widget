@@ -16,6 +16,7 @@ const GOOGLE_PLACE_ID = process.env.GOOGLE_PLACE_ID || "";
 const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
 const CACHE_FILE = path.join(process.cwd(), "data", "reviews.json");
 const WIDGET_FILE = path.join(process.cwd(), "public", "widget.js");
+const TEST_FILE = path.join(process.cwd(), "test.html");
 
 if (!GOOGLE_API_KEY || !GOOGLE_PLACE_ID) {
   throw new Error("Missing GOOGLE_API_KEY or GOOGLE_PLACE_ID in environment.");
@@ -27,6 +28,7 @@ if (ALLOWED_ORIGINS.length === 0) {
 
 const app = Fastify({ logger: false });
 let widgetScript = "";
+let testHtml = "";
 let cacheState = {
   rating: null,
   totalReviews: null,
@@ -70,6 +72,17 @@ app.get("/widget.js", async (_, reply) => {
   return widgetScript;
 });
 
+app.get("/test.html", async (_, reply) => {
+  if (!testHtml) {
+    reply.code(404).send("test.html not found");
+    return;
+  }
+
+  reply.header("Content-Type", "text/html; charset=utf-8");
+  reply.header("Cache-Control", "no-store");
+  return testHtml;
+});
+
 app.get("/health", async () => {
   return {
     status: "ok",
@@ -79,12 +92,14 @@ app.get("/health", async () => {
 });
 
 async function bootstrap() {
-  const [diskCache, loadedWidget] = await Promise.all([
+  const [diskCache, loadedWidget, loadedTestHtml] = await Promise.all([
     loadFromDisk(CACHE_FILE),
-    fs.readFile(WIDGET_FILE, "utf8")
+    fs.readFile(WIDGET_FILE, "utf8"),
+    fs.readFile(TEST_FILE, "utf8").catch(() => "")
   ]);
 
   widgetScript = loadedWidget;
+  testHtml = loadedTestHtml;
 
   if (diskCache) {
     cacheState = {

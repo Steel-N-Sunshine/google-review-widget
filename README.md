@@ -71,10 +71,8 @@ Example response from `/api/reviews`:
       "authorPhoto": null,
       "authorUrl": null,
       "rating": 5,
-      "relativeTime": "2 weeks ago",
       "publishTime": "2026-02-20T10:30:00Z",
-      "text": "Great experience...",
-      "originalText": null
+      "text": "Great experience..."
     }
   ],
   "totalCached": 23,
