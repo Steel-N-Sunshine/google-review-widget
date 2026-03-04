@@ -12,8 +12,8 @@
     rowGap: 20,
     maxWidth: 1280,
     showLoadMore: true,
-    minStars: 1,
-    showNoTextReviews: true
+    minStars: 5,
+    showNoTextReviews: false
   });
   const TEXT_PREVIEW_LENGTH = 180;
   const AVATAR_COLORS = [
