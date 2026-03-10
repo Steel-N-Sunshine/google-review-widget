@@ -27,10 +27,10 @@ Pin to any release tag:
 docker pull steelnsunshine/google-reviews-widget:vX.Y.Z
 ```
 
-Current release at the time of writing: `v0.2.2`:
+Current release at the time of writing: `v0.2.4`:
 
 ```bash
-docker pull steelnsunshine/google-reviews-widget:v0.2.2
+docker pull steelnsunshine/google-reviews-widget:v0.2.4
 ```
 
 Image publishing is automated by GitHub Actions on each published GitHub release (including `latest` and semver tags).
@@ -40,7 +40,7 @@ Image publishing is automated by GitHub Actions on each published GitHub release
 ### Advantages
 
 - Avoids relying on Google Business Profile API access, which is often harder to get approved and may add operational risk for many self-hosted users.
-- Uses Google Places API (Legacy) because it supports sorting reviews by newest (`REVIEWS_SORT=NEWEST`), which fits ongoing cache growth.
+- Uses Google Places API (Legacy) and always requests newest-first review sorting to support ongoing cache growth.
 - Starts simple and stable: server-side polling, disk-backed cache, and lightweight embed script.
 
 ### Limitations
@@ -109,8 +109,7 @@ The widget container expects:
 | `POLL_INTERVAL_MINUTES` | no | `5` | Poll frequency (minimum enforced: `1`) |
 | `MAX_REVIEWS` | no | `50` | Max reviews kept in cache (minimum enforced: `1`) |
 | `PORT` | no | `3000` | Internal app port |
-| `REVIEWS_SORT` | no | `NEWEST` | `NEWEST` or `MOST_RELEVANT` |
-| `WIDGET_HOST` | no | - | Hostname used in Traefik label examples |
+| `WIDGET_HOST` | no | - | Hostname used only for Docker Compose/Traefik label substitution; the app itself does not read this value |
 
 Example `.env`:
 
@@ -121,9 +120,10 @@ ALLOWED_ORIGINS=https://www.example.com,https://example.com
 POLL_INTERVAL_MINUTES=5
 MAX_REVIEWS=50
 PORT=3000
-REVIEWS_SORT=NEWEST
 WIDGET_HOST=reviews.example.com
 ```
+
+`WIDGET_HOST` is optional unless you are using the provided Traefik-based Compose examples. It exists to keep the Traefik router rule configurable in `.env`; if you are not using Traefik labels, or you hardcode the hostname directly in your compose file, you can omit it.
 
 ## Recommended Deployment: Docker Compose + Traefik + Cloudflare DNS-01
 

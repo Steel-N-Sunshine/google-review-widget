@@ -32,7 +32,6 @@ Optional env vars:
 - `POLL_INTERVAL_MINUTES`
 - `MAX_REVIEWS`
 - `PORT`
-- `REVIEWS_SORT`
 - `WIDGET_HOST`
 
 ## Operations notes

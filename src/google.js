@@ -19,12 +19,11 @@ function normalizeReview(review) {
   };
 }
 
-async function fetchGooglePlaceReviews({ apiKey, placeId, reviewsSort = "NEWEST" }) {
-  const sort = reviewsSort === "MOST_RELEVANT" ? "most_relevant" : "newest";
+async function fetchGooglePlaceReviews({ apiKey, placeId }) {
   const url = new URL(GOOGLE_LEGACY_PLACE_DETAILS_URL);
   url.searchParams.set("place_id", placeId);
   url.searchParams.set("fields", "name,rating,user_ratings_total,reviews");
-  url.searchParams.set("reviews_sort", sort);
+  url.searchParams.set("reviews_sort", "newest");
   url.searchParams.set("key", apiKey);
 
   const response = await fetch(url, {

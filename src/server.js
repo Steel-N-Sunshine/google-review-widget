@@ -10,7 +10,6 @@ const { parseAllowedOrigins, createOriginGuard } = require("./origin");
 const PORT = Number(process.env.PORT || 3000);
 const POLL_INTERVAL_MINUTES = Math.max(1, Number(process.env.POLL_INTERVAL_MINUTES || 5));
 const MAX_REVIEWS = Math.max(1, Number(process.env.MAX_REVIEWS || 50));
-const REVIEWS_SORT = process.env.REVIEWS_SORT === "MOST_RELEVANT" ? "MOST_RELEVANT" : "NEWEST";
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || "";
 const GOOGLE_PLACE_ID = process.env.GOOGLE_PLACE_ID || "";
 const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
@@ -114,7 +113,6 @@ async function bootstrap() {
   const poller = createPoller({
     apiKey: GOOGLE_API_KEY,
     placeId: GOOGLE_PLACE_ID,
-    reviewsSort: REVIEWS_SORT,
     maxReviews: MAX_REVIEWS,
     cacheFilePath: CACHE_FILE,
     getState,
