@@ -27,10 +27,10 @@ Pin to any release tag:
 docker pull steelnsunshine/google-reviews-widget:vX.Y.Z
 ```
 
-Current release at the time of writing: `v0.2.4`:
+Current release at the time of writing: `v0.2.5`:
 
 ```bash
-docker pull steelnsunshine/google-reviews-widget:v0.2.4
+docker pull steelnsunshine/google-reviews-widget:v0.2.5
 ```
 
 Image publishing is automated by GitHub Actions on each published GitHub release (including `latest` and semver tags).
