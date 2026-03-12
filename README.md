@@ -110,6 +110,8 @@ The widget container expects:
 | `MAX_REVIEWS` | no | `50` | Max reviews kept in cache (minimum enforced: `1`) |
 | `PORT` | no | `3000` | Internal app port |
 | `WIDGET_HOST` | no | - | Hostname used only for Docker Compose/Traefik label substitution; the app itself does not read this value |
+| `ACME_EMAIL` | no | - | Contact email used by Traefik/Let's Encrypt ACME in the standalone Traefik example |
+| `CF_DNS_API_TOKEN` | no | - | Cloudflare DNS API token used by Traefik for DNS-01 certificate validation |
 
 Example `.env`:
 
@@ -121,9 +123,11 @@ POLL_INTERVAL_MINUTES=5
 MAX_REVIEWS=50
 PORT=3000
 WIDGET_HOST=reviews.example.com
+ACME_EMAIL=you@example.com
+docker CF_DNS_API_TOKEN=your_cloudflare_dns_token
 ```
 
-`WIDGET_HOST` is optional unless you are using the provided Traefik-based Compose examples. It exists to keep the Traefik router rule configurable in `.env`; if you are not using Traefik labels, or you hardcode the hostname directly in your compose file, you can omit it.
+`WIDGET_HOST`, `ACME_EMAIL`, and `CF_DNS_API_TOKEN` are optional unless you are using the provided Traefik-based Compose examples. The app itself does not read `WIDGET_HOST`, and Traefik is the component that uses `ACME_EMAIL` and `CF_DNS_API_TOKEN` for certificate issuance.
 
 ## Recommended Deployment: Docker Compose + Traefik + Cloudflare DNS-01
 
