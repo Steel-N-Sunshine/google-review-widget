@@ -10,6 +10,7 @@ const { parseAllowedOrigins, createOriginGuard } = require("./origin");
 const PORT = Number(process.env.PORT || 3000);
 const POLL_INTERVAL_MINUTES = Math.max(1, Number(process.env.POLL_INTERVAL_MINUTES || 5));
 const MAX_REVIEWS = Math.max(1, Number(process.env.MAX_REVIEWS || 50));
+const DISABLE_AUTO_TRANSLATIONS = String(process.env.DISABLE_AUTO_TRANSLATIONS || "true").toLowerCase() !== "false";
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || "";
 const GOOGLE_PLACE_ID = process.env.GOOGLE_PLACE_ID || "";
 const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
@@ -66,7 +67,7 @@ app.get("/api/reviews", { preHandler: originGuard }, async (request, reply) => {
 
 app.get("/widget.js", async (_, reply) => {
   reply.header("Content-Type", "application/javascript; charset=utf-8");
-  reply.header("Cache-Control", "public, max-age=3600");
+  reply.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
   reply.header("Access-Control-Allow-Origin", "*");
   return widgetScript;
 });
@@ -113,6 +114,7 @@ async function bootstrap() {
   const poller = createPoller({
     apiKey: GOOGLE_API_KEY,
     placeId: GOOGLE_PLACE_ID,
+    disableAutoTranslations: DISABLE_AUTO_TRANSLATIONS,
     maxReviews: MAX_REVIEWS,
     cacheFilePath: CACHE_FILE,
     getState,

@@ -19,11 +19,14 @@ function normalizeReview(review) {
   };
 }
 
-async function fetchGooglePlaceReviews({ apiKey, placeId }) {
+async function fetchGooglePlaceReviews({ apiKey, placeId, disableAutoTranslations = true }) {
   const url = new URL(GOOGLE_LEGACY_PLACE_DETAILS_URL);
   url.searchParams.set("place_id", placeId);
   url.searchParams.set("fields", "name,rating,user_ratings_total,reviews");
   url.searchParams.set("reviews_sort", "newest");
+  if (disableAutoTranslations) {
+    url.searchParams.set("reviews_no_translations", "true");
+  }
   url.searchParams.set("key", apiKey);
 
   const response = await fetch(url, {
