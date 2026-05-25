@@ -108,6 +108,7 @@ The widget container expects:
 | `ALLOWED_ORIGINS` | yes | - | Comma-separated allowed origins for `/api/reviews` |
 | `POLL_INTERVAL_MINUTES` | no | `5` | Poll frequency (minimum enforced: `1`) |
 | `MAX_REVIEWS` | no | `50` | Max reviews kept in cache (minimum enforced: `1`) |
+| `DISABLE_AUTO_TRANSLATIONS` | no | `true` | Disable Google's auto-translation of reviews |
 | `PORT` | no | `3000` | Internal app port |
 | `WIDGET_HOST` | no | - | Hostname used only for Docker Compose/Traefik label substitution; the app itself does not read this value |
 | `ACME_EMAIL` | no | - | Contact email used by Traefik/Let's Encrypt ACME in the standalone Traefik example |
@@ -349,6 +350,9 @@ Advanced embed (all current data attributes):
 | Attribute | Type | Default | Valid Values / Range | Description |
 |---|---|---|---|---|
 | `data-grw-theme` | string | `light` | `light`, `dark` | Widget theme (`data-theme` is legacy fallback) |
+| `data-grw-view-mode` | string | `masonry` | `masonry`, `carousel` | Layout mode (carousel sorts earliest to oldest) |
+| `data-grw-name-display` | string | `full` | `full`, `first`, `initial`, `none` | How reviewer names are shown (`initial` = John D.) |
+| `data-grw-locale` | string | (auto) | `en`, `he`, `es`, `fr`, etc. | Force a specific language (auto-detects RTL) |
 | `data-grw-desktop-initial` | integer | `12` | `1..100` | Initial visible cards on desktop |
 | `data-grw-mobile-initial` | integer | `6` | `1..100` | Initial visible cards on mobile |
 | `data-grw-desktop-batch` | integer | `12` | `1..100` | Cards added by "Load more" button on desktop |
@@ -383,10 +387,31 @@ You can also configure via query params on script URL:
 
 Supported query keys mirror the config field names:
 
+- `viewMode`, `nameDisplay`, `locale`
 - `desktopInitial`, `mobileInitial`, `desktopBatch`, `mobileBatch`
 - `maxWidth`, `mobileBreakpoint`, `cardWidth`
 - `columnGap`, `rowGap`, `maxColumns`
 - `showLoadMore`, `minStars`, `showNoTextReviews`
+
+## Features
+
+### Carousel View
+- Horizontal slider layout for reviews.
+- **Earliest to Oldest:** Carousel mode automatically sorts reviews chronologically.
+- Supports touch/swipe gestures on mobile devices.
+- Responsive navigation buttons that adapt to text direction.
+
+### Reviewer Name Display
+Customize how names appear for privacy or aesthetic reasons:
+- `full`: Complete name as provided by Google (default).
+- `first`: Shows only the first name.
+- `initial`: Shows the first name and last name's initial (e.g., "John D.").
+- `none`: Hides the name and verified badge entirely.
+
+### Internationalization & RTL
+- Automatic Right-to-Left (RTL) detection for Hebrew and Arabic.
+- Corrected carousel navigation and arrow orientation for RTL layouts.
+- Optimized language resolution (URL parameter > Data attribute > Container lang > HTML lang).
 
 ## API Endpoints
 
