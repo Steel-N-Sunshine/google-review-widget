@@ -4,6 +4,7 @@ const { fetchGooglePlaceReviews } = require("./google");
 function createPoller({
   apiKey,
   placeId,
+  disableAutoTranslations,
   maxReviews,
   cacheFilePath,
   getState,
@@ -14,7 +15,11 @@ function createPoller({
 
   async function pollOnce() {
     try {
-      const incoming = await fetchGooglePlaceReviews({ apiKey, placeId });
+      const incoming = await fetchGooglePlaceReviews({
+        apiKey,
+        placeId,
+        disableAutoTranslations
+      });
       const current = getState();
       const existingIds = new Set((current.reviews || []).map((r) => r.id));
       const mergedReviews = mergeReviews(current.reviews || [], incoming.reviews || [], maxReviews);

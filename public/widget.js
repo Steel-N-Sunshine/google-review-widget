@@ -13,7 +13,83 @@
     maxWidth: 1280,
     showLoadMore: true,
     minStars: 5,
-    showNoTextReviews: false
+    showNoTextReviews: false,
+    viewMode: "masonry",
+    nameDisplay: "full"
+  });
+  const UI_TEXT = Object.freeze({
+    en: {
+      headerLabel: "Google Reviews",
+      loadMore: "Load More",
+      readMore: "Read more",
+      showLess: "Show less",
+      anonymous: "Anonymous",
+      notAvailable: "N/A"
+    },
+    he: {
+      headerLabel: "ביקורות מגוגל",
+      loadMore: "טען עוד",
+      readMore: "קרא עוד",
+      showLess: "הצג פחות",
+      anonymous: "אנונימי",
+      notAvailable: "לא זמין"
+    },
+    es: {
+      headerLabel: "Resenas de Google",
+      loadMore: "Cargar mas",
+      readMore: "Leer mas",
+      showLess: "Mostrar menos",
+      anonymous: "Anonimo",
+      notAvailable: "N/D"
+    },
+    fr: {
+      headerLabel: "Avis Google",
+      loadMore: "Charger plus",
+      readMore: "Lire plus",
+      showLess: "Afficher moins",
+      anonymous: "Anonyme",
+      notAvailable: "N/D"
+    },
+    de: {
+      headerLabel: "Google-Bewertungen",
+      loadMore: "Mehr laden",
+      readMore: "Weiter lesen",
+      showLess: "Weniger anzeigen",
+      anonymous: "Anonym",
+      notAvailable: "k. A."
+    },
+    ar: {
+      headerLabel: "مراجعات Google",
+      loadMore: "تحميل المزيد",
+      readMore: "اقرأ المزيد",
+      showLess: "عرض أقل",
+      anonymous: "مجهول",
+      notAvailable: "غير متوفر"
+    },
+    pt: {
+      headerLabel: "Avaliacoes do Google",
+      loadMore: "Carregar mais",
+      readMore: "Ler mais",
+      showLess: "Mostrar menos",
+      anonymous: "Anonimo",
+      notAvailable: "N/D"
+    },
+    it: {
+      headerLabel: "Recensioni Google",
+      loadMore: "Carica altro",
+      readMore: "Leggi di piu",
+      showLess: "Mostrar menos",
+      anonymous: "Anonimo",
+      notAvailable: "N/D"
+    },
+    ru: {
+      headerLabel: "Отзывы Google",
+      loadMore: "Показать еще",
+      readMore: "Читать далее",
+      showLess: "Скрыть",
+      anonymous: "Аноним",
+      notAvailable: "N/D"
+    }
   });
   const TEXT_PREVIEW_LENGTH = 180;
   const AVATAR_COLORS = [
@@ -38,6 +114,20 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function formatName(fullName, mode, anonymousText) {
+    if (mode === "none") return "";
+    const name = String(fullName || "").trim();
+    if (!name) return anonymousText;
+    const parts = name.split(/\s+/);
+    if (mode === "first") return parts[0];
+    if (mode === "initial") {
+      if (parts.length === 1) return parts[0];
+      const last = parts[parts.length - 1];
+      return `${parts[0]} ${last[0]}.`;
+    }
+    return name;
   }
 
   function getScriptContext() {
@@ -71,64 +161,87 @@
   }
 
   function sanitizeConfig(partial) {
-    const merged = {
-      ...DEFAULT_CONFIG,
-      ...partial
-    };
+    const merged = { ...DEFAULT_CONFIG, ...partial };
+    const getInt = (k, min, max) => clamp(parseInteger(merged[k]) ?? DEFAULT_CONFIG[k], min, max);
+    const getBool = (k) => parseBoolean(merged[k]) ?? DEFAULT_CONFIG[k];
 
     return {
-      desktopInitial: clamp(parseInteger(merged.desktopInitial) ?? DEFAULT_CONFIG.desktopInitial, 1, 100),
-      mobileInitial: clamp(parseInteger(merged.mobileInitial) ?? DEFAULT_CONFIG.mobileInitial, 1, 100),
-      desktopBatch: clamp(parseInteger(merged.desktopBatch) ?? DEFAULT_CONFIG.desktopBatch, 1, 100),
-      mobileBatch: clamp(parseInteger(merged.mobileBatch) ?? DEFAULT_CONFIG.mobileBatch, 1, 100),
-      maxWidth: clamp(parseInteger(merged.maxWidth) ?? DEFAULT_CONFIG.maxWidth, 320, 2000),
-      mobileBreakpoint: clamp(parseInteger(merged.mobileBreakpoint) ?? DEFAULT_CONFIG.mobileBreakpoint, 320, 1024),
-      cardWidth: clamp(parseInteger(merged.cardWidth) ?? DEFAULT_CONFIG.cardWidth, 220, 600),
-      columnGap: clamp(parseInteger(merged.columnGap) ?? DEFAULT_CONFIG.columnGap, 0, 64),
-      rowGap: clamp(parseInteger(merged.rowGap) ?? DEFAULT_CONFIG.rowGap, 0, 64),
-      maxColumns: clamp(parseInteger(merged.maxColumns) ?? DEFAULT_CONFIG.maxColumns, 1, 8),
-      showLoadMore: parseBoolean(merged.showLoadMore) ?? DEFAULT_CONFIG.showLoadMore,
-      minStars: clamp(parseInteger(merged.minStars) ?? DEFAULT_CONFIG.minStars, 1, 5),
-      showNoTextReviews: parseBoolean(merged.showNoTextReviews) ?? DEFAULT_CONFIG.showNoTextReviews
+      desktopInitial: getInt("desktopInitial", 1, 100),
+      mobileInitial: getInt("mobileInitial", 1, 100),
+      desktopBatch: getInt("desktopBatch", 1, 100),
+      mobileBatch: getInt("mobileBatch", 1, 100),
+      maxWidth: getInt("maxWidth", 320, 2000),
+      mobileBreakpoint: getInt("mobileBreakpoint", 320, 1024),
+      cardWidth: getInt("cardWidth", 220, 600),
+      columnGap: getInt("columnGap", 0, 64),
+      rowGap: getInt("rowGap", 0, 64),
+      maxColumns: getInt("maxColumns", 1, 8),
+      showLoadMore: getBool("showLoadMore"),
+      minStars: getInt("minStars", 1, 5),
+      showNoTextReviews: getBool("showNoTextReviews"),
+      locale: merged.locale ? String(merged.locale).trim().toLowerCase() : null,
+      viewMode: ["masonry", "carousel"].includes(merged.viewMode) ? merged.viewMode : DEFAULT_CONFIG.viewMode,
+      nameDisplay: ["full", "first", "initial", "none"].includes(merged.nameDisplay) ? merged.nameDisplay : DEFAULT_CONFIG.nameDisplay
     };
   }
 
-  function readConfigFromQuery(scriptUrl) {
-    if (!scriptUrl) return {};
-    const params = scriptUrl.searchParams;
-    return {
-      desktopInitial: params.get("desktopInitial"),
-      mobileInitial: params.get("mobileInitial"),
-      desktopBatch: params.get("desktopBatch"),
-      mobileBatch: params.get("mobileBatch"),
-      maxWidth: params.get("maxWidth"),
-      mobileBreakpoint: params.get("mobileBreakpoint"),
-      cardWidth: params.get("cardWidth"),
-      columnGap: params.get("columnGap"),
-      rowGap: params.get("rowGap"),
-      showLoadMore: params.get("showLoadMore"),
-      maxColumns: params.get("maxColumns"),
-      minStars: params.get("minStars"),
-      showNoTextReviews: params.get("showNoTextReviews")
-    };
+  function readConfig(source, type = "query") {
+    const keys = [
+      "desktopInitial", "mobileInitial", "desktopBatch", "mobileBatch",
+      "maxWidth", "mobileBreakpoint", "cardWidth", "columnGap", "rowGap",
+      "showLoadMore", "maxColumns", "minStars", "showNoTextReviews",
+      "locale", "viewMode", "nameDisplay"
+    ];
+    const config = {};
+    for (const key of keys) {
+      if (type === "query") {
+        config[key] = source.searchParams.get(key);
+      } else {
+        const attr = `data-grw-${key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`;
+        config[key] = source.getAttribute(attr);
+      }
+    }
+    return Object.fromEntries(Object.entries(config).filter(([_, v]) => v != null));
   }
 
-  function readConfigFromDataAttributes(container) {
-    return {
-      desktopInitial: container.getAttribute("data-grw-desktop-initial"),
-      mobileInitial: container.getAttribute("data-grw-mobile-initial"),
-      desktopBatch: container.getAttribute("data-grw-desktop-batch"),
-      mobileBatch: container.getAttribute("data-grw-mobile-batch"),
-      maxWidth: container.getAttribute("data-grw-max-width"),
-      mobileBreakpoint: container.getAttribute("data-grw-mobile-breakpoint"),
-      cardWidth: container.getAttribute("data-grw-card-width"),
-      columnGap: container.getAttribute("data-grw-column-gap"),
-      rowGap: container.getAttribute("data-grw-row-gap"),
-      showLoadMore: container.getAttribute("data-grw-show-load-more"),
-      maxColumns: container.getAttribute("data-grw-max-columns"),
-      minStars: container.getAttribute("data-grw-min-stars"),
-      showNoTextReviews: container.getAttribute("data-grw-show-no-text-reviews")
-    };
+  function resolveLocale(localeInput) {
+    const requested = String(localeInput || "en").toLowerCase();
+    const short = requested.split("-")[0];
+    if (UI_TEXT[requested]) return requested;
+    if (UI_TEXT[short]) return short;
+    return "en";
+  }
+
+  function getUiText(localeInput) {
+    return UI_TEXT[resolveLocale(localeInput)];
+  }
+
+  function normalizeReviewKey(review) {
+    const author = String(review?.author || review?.author_name || "").trim().toLowerCase();
+    const authorUrl = String(review?.authorUrl || review?.author_url || "").trim().toLowerCase();
+    const publishTime = String(review?.publishTime || review?.publish_time || review?.time || "").trim();
+    const text = String(review?.text || "").trim().replace(/\s+/g, " ").toLowerCase();
+
+    if (authorUrl && publishTime) {
+      return `url|${authorUrl}|${publishTime}`;
+    }
+
+    if (author && publishTime) {
+      return `author|${author}|${publishTime}`;
+    }
+
+    return `text|${author}|${text.slice(0, 80)}`;
+  }
+
+  function dedupeReviews(list) {
+    const map = new Map();
+
+    for (const review of Array.isArray(list) ? list : []) {
+      if (!review || typeof review !== "object") continue;
+      map.set(normalizeReviewKey(review), review);
+    }
+
+    return Array.from(map.values());
   }
 
   function truncateAtWord(text, maxLength) {
@@ -140,7 +253,7 @@
     return `${clipped}...`;
   }
 
-  function formatRelativeTimeFromPublishTime(publishTime, fallback = "") {
+  function formatRelativeTimeFromPublishTime(publishTime, fallback = "", locale = "en") {
     const timestamp = Date.parse(String(publishTime || ""));
     if (!Number.isFinite(timestamp)) return String(fallback || "");
 
@@ -154,7 +267,7 @@
     const month = 30 * day;
     const year = 365 * day;
 
-    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    const rtf = new Intl.RelativeTimeFormat(resolveLocale(locale), { numeric: "auto" });
 
     if (absMs < hour) {
       return rtf.format(Math.round(diffMs / minute), "minute");
@@ -194,6 +307,13 @@
 
   function verifiedSvg() {
     return '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" aria-hidden="true" class="grw-verified"><path fill="#197BFF" d="M6.757.236a.35.35 0 0 1 .486 0l1.106 1.07a.35.35 0 0 0 .329.089l1.493-.375a.35.35 0 0 1 .422.244l.422 1.48a.35.35 0 0 0 .24.24l1.481.423a.35.35 0 0 1 .244.422l-.375 1.493a.35.35 0 0 0 .088.329l1.071 1.106a.35.35 0 0 1 0 .486l-1.07 1.106a.35.35 0 0 0-.089.329l.375 1.493a.35.35 0 0 1-.244.422l-1.48.422a.35.35 0 0 0-.24.24l-.423 1.481a.35.35 0 0 1-.422.244l-1.493-.375a.35.35 0 0 0-.329.088l-1.106 1.071a.35.35 0 0 1-.486 0l-1.106-1.07a.35.35 0 0 0-.329-.089l-1.493.375a.35.35 0 0 1-.422-.244l-.422-1.48a.35.35 0 0 0-.24-.24l-1.481-.423a.35.35 0 0 1-.244-.422l.375-1.493a.35.35 0 0 0-.088-.329L.236 7.243a.35.35 0 0 1 0-.486l1.07-1.106a.35.35 0 0 0 .089-.329L1.02 3.829a.35.35 0 0 1 .244-.422l1.48-.422a.35.35 0 0 0 .24-.24l.423-1.481a.35.35 0 0 1 .422-.244l1.493.375a.35.35 0 0 0 .329-.088L6.757.236Z"></path><path fill="#fff" fill-rule="evenodd" d="M9.065 4.85a.644.644 0 0 1 .899 0 .615.615 0 0 1 .053.823l-.053.059L6.48 9.15a.645.645 0 0 1-.84.052l-.06-.052-1.66-1.527a.616.616 0 0 1 0-.882.645.645 0 0 1 .84-.052l.06.052 1.21 1.086 3.034-2.978Z" clip-rule="evenodd"></path></svg>';
+  }
+
+  function arrowSvg(direction, isRtl = false) {
+    const isNext = direction === "next";
+    const pointingRight = isRtl ? !isNext : isNext;
+    const d = pointingRight ? "M5 1L11 7L5 13" : "M9 1L3 7L9 13";
+    return `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="${d}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
 
   function buildStyles(theme, config) {
@@ -358,6 +478,16 @@
       .grw-sk-e { width: 85%; height: 10px; margin-bottom: 6px; }
       .grw-sk-f { width: 70%; height: 10px; }
       @keyframes grwShimmer { 100% { transform: translateX(100%); } }
+      .grw-carousel-wrap { position: relative; width: 100%; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+      .grw-carousel-view { overflow: hidden; width: 100%; }
+      .grw-carousel-track { display: flex; transition: transform 0.4s ease; gap: ${config.columnGap}px; padding: 4px 0; }
+      .grw-carousel-track .grw-card { position: relative; flex: 0 0 ${config.cardWidth}px; width: ${config.cardWidth}px; transform: none !important; }
+      .grw-carousel-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(17, 17, 17, 0.1); background: ${dark ? "rgb(34, 34, 34)" : "#fff"}; color: ${dark ? "#fff" : "#1f2328"}; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 0 0 40px; transition: background-color 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+      .grw-carousel-btn:hover { background: ${dark ? "rgb(44, 44, 44)" : "#f5f5f5"}; }
+      .grw-carousel-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+      .grw-root[data-mode="mobile"] .grw-carousel-track .grw-card { flex: 0 0 100%; width: 100%; }
+      .grw-root[data-mode="mobile"] .grw-carousel-wrap { gap: 8px; }
+      .grw-root[data-mode="mobile"] .grw-carousel-btn { width: 32px; height: 32px; flex: 0 0 32px; }
     `;
   }
 
@@ -449,6 +579,33 @@
     state.mode = mode;
   }
 
+  function updateCarousel(root, state, config) {
+    const track = root.querySelector(".grw-carousel-track");
+    if (!track) return;
+    const cards = track.querySelectorAll(".grw-card");
+    if (cards.length === 0) return;
+
+    const view = root.querySelector(".grw-carousel-view");
+    const containerWidth = view.clientWidth || 0;
+    const mode = getViewportMode(root.clientWidth || 0, config);
+    const columns = getColumns(containerWidth, mode, config);
+    const cardWidth = mode === "mobile" ? containerWidth : config.cardWidth;
+    const gap = config.columnGap;
+    const isRtl = root.getAttribute("dir") === "rtl";
+
+    const maxIndex = Math.max(0, cards.length - columns);
+    state.carouselIndex = Math.min(Math.max(0, state.carouselIndex || 0), maxIndex);
+
+    const offset = state.carouselIndex * (cardWidth + gap);
+    track.style.transform = `translateX(${(isRtl ? 1 : -1) * offset}px)`;
+
+    const prevBtn = root.querySelector('[data-action="prev"]');
+    const nextBtn = root.querySelector('[data-action="next"]');
+    if (prevBtn) prevBtn.disabled = state.carouselIndex === 0;
+    if (nextBtn) nextBtn.disabled = state.carouselIndex >= maxIndex;
+    state.mode = mode;
+  }
+
   function toggleSingleCard(root, index, state, config) {
     const review = Array.isArray(state.filteredReviews) ? state.filteredReviews[index] : null;
     if (!review) return;
@@ -467,23 +624,31 @@
 
     const toggleBtn = card.querySelector('[data-action="toggle"]');
     if (toggleBtn) {
-      toggleBtn.textContent = expanded ? "Show less" : "Read more";
+      toggleBtn.textContent = expanded ? state.uiText.showLess : state.uiText.readMore;
     }
 
     applyMasonryLayout(root, state, config);
   }
 
   function renderWidget(container, data, state, config) {
-    const safeRating = Number.isFinite(data.rating) ? data.rating.toFixed(1) : "N/A";
+    const safeRating = Number.isFinite(data.rating) ? data.rating.toFixed(1) : state.uiText.notAvailable;
     const safeTotal = Number.isFinite(data.totalReviews) ? data.totalReviews : 0;
-    const filteredReviews = (Array.isArray(data.reviews) ? data.reviews : []).filter((review) => {
+    const uniqueReviews = dedupeReviews(data.reviews);
+    const isCarousel = config.viewMode === "carousel";
+
+    const reviewsToProcess = isCarousel
+      ? uniqueReviews.slice().sort((a, b) => (Date.parse(a.publishTime) || 0) - (Date.parse(b.publishTime) || 0))
+      : uniqueReviews;
+
+    const filteredReviews = reviewsToProcess.filter((review) => {
       const rating = Number(review?.rating) || 0;
       if (rating < config.minStars) return false;
       if (!config.showNoTextReviews && String(review?.text || "").trim().length === 0) return false;
       return true;
     });
+
     const total = filteredReviews.length;
-    const visibleCount = config.showLoadMore ? Math.min(state.visibleCount, total) : total;
+    const visibleCount = (isCarousel || !config.showLoadMore) ? total : Math.min(state.visibleCount, total);
     const visibleReviews = filteredReviews.slice(0, visibleCount);
     const hasMore = visibleCount < total;
     state.filteredReviews = visibleReviews;
@@ -496,12 +661,13 @@
         const canToggle = fullText.length > shortText.length;
         const expanded = state.expanded.has(absoluteIndex);
         const shownText = expanded ? fullText : shortText;
-        const author = escapeHtml(review.author || "Anonymous");
-        const relativeTime = escapeHtml(formatRelativeTimeFromPublishTime(review.publishTime));
+        const authorFullName = review.author || state.uiText.anonymous;
+        const author = escapeHtml(formatName(authorFullName, config.nameDisplay, state.uiText.anonymous));
+        const relativeTime = escapeHtml(formatRelativeTimeFromPublishTime(review.publishTime, "", state.locale));
 
         const avatar = review.authorPhoto
           ? `<div class="grw-avatar"><img src="${escapeHtml(review.authorPhoto)}" alt="${author}" loading="lazy" referrerpolicy="no-referrer" /></div>`
-          : `<div class="grw-avatar" style="background:${getAvatarColor(author)}">${escapeHtml((author[0] || "A").toUpperCase())}</div>`;
+          : `<div class="grw-avatar" style="background:${getAvatarColor(authorFullName)}">${escapeHtml((authorFullName[0] || "A").toUpperCase())}</div>`;
 
         return `
           <article class="grw-card" data-card-index="${absoluteIndex}">
@@ -511,37 +677,57 @@
                 <span class="grw-g-icon">${googleIconSvg(state.theme === "dark")}</span>
               </div>
               <div>
-                <div class="grw-author">${author} ${verifiedSvg()}</div>
+                <div class="grw-author">${author} ${author ? verifiedSvg() : ""}</div>
                 <div class="grw-time">${relativeTime}</div>
               </div>
             </div>
             <div class="grw-stars">${makeStars(review.rating)}</div>
-            <div class="grw-text">${escapeHtml(shownText)}</div>
-            ${canToggle ? `<button class="grw-toggle" type="button" data-action="toggle" data-index="${absoluteIndex}">${expanded ? "Show less" : "Read more"}</button>` : ""}
+            <div class="grw-text notranslate" translate="no">${escapeHtml(shownText)}</div>
+            ${canToggle ? `<button class="grw-toggle" type="button" data-action="toggle" data-index="${absoluteIndex}">${expanded ? state.uiText.showLess : state.uiText.readMore}</button>` : ""}
           </article>
         `;
       })
       .join("");
 
-    container.innerHTML = `
+    const headerHtml = `
       <div class="grw-header">
         <span class="grw-header-score">${safeRating}</span>
         <div class="grw-header-right">
-          <span class="grw-header-label">Google Reviews</span>
+          <span class="grw-header-label">${state.uiText.headerLabel}</span>
           <div class="grw-header-stars">${makeStars(Math.round(Number(data.rating) || 0))}<span class="grw-header-total">(${safeTotal})</span></div>
         </div>
       </div>
-      <div class="grw-layout"><div class="grw-masonry">${cards}</div></div>
-      ${(config.showLoadMore && hasMore) ? '<button class="grw-load-more" type="button" data-action="load-more">Load More</button>' : ""}
     `;
 
-    applyMasonryLayout(container, state, config);
+    if (isCarousel) {
+      const isRtl = state.locale === "he" || state.locale === "ar";
+      container.innerHTML = `
+        ${headerHtml}
+        <div class="grw-carousel-wrap" aria-roledescription="carousel" aria-label="${state.uiText.headerLabel}">
+          <button class="grw-carousel-btn" type="button" data-action="prev" aria-label="Previous slide">${arrowSvg("prev", isRtl)}</button>
+          <div class="grw-carousel-view">
+            <div class="grw-carousel-track">${cards}</div>
+          </div>
+          <button class="grw-carousel-btn" type="button" data-action="next" aria-label="Next slide">${arrowSvg("next", isRtl)}</button>
+        </div>
+      `;
+      if (state.carouselIndex === undefined) state.carouselIndex = 0;
+      updateCarousel(container, state, config);
+    } else {
+      container.innerHTML = `
+        ${headerHtml}
+        <div class="grw-layout"><div class="grw-masonry">${cards}</div></div>
+        ${(config.showLoadMore && hasMore) ? `<button class="grw-load-more" type="button" data-action="load-more">${state.uiText.loadMore}</button>` : ""}
+      `;
+      applyMasonryLayout(container, state, config);
+    }
 
     const images = Array.from(container.querySelectorAll(".grw-card img"));
     for (const image of images) {
       if (image.complete) continue;
-      image.addEventListener("load", () => applyMasonryLayout(container, state, config), { once: true });
-      image.addEventListener("error", () => applyMasonryLayout(container, state, config), { once: true });
+      const callback = () => (isCarousel ? updateCarousel(container, state, config) : applyMasonryLayout(container, state, config));
+      image.addEventListener("load", callback, { once: true });
+      image.addEventListener("error", callback, { once: true });
     }
   }
 
@@ -550,8 +736,8 @@
     if (!container) return;
 
     const { scriptUrl } = getScriptContext();
-    const queryConfig = readConfigFromQuery(scriptUrl);
-    const dataConfig = readConfigFromDataAttributes(container);
+    const queryConfig = readConfig(scriptUrl, "query");
+    const dataConfig = readConfig(container, "data");
     const config = sanitizeConfig({
       ...queryConfig,
       ...dataConfig
@@ -563,6 +749,11 @@
 
     const root = document.createElement("div");
     root.className = "grw-root";
+    root.classList.add("notranslate");
+    root.setAttribute("translate", "no");
+    const locale = resolveLocale(config.locale || container.getAttribute("lang") || document.documentElement.lang || "en");
+    root.setAttribute("lang", locale);
+    root.setAttribute("dir", locale === "he" || locale === "ar" ? "rtl" : "ltr");
     root.style.maxWidth = `${config.maxWidth}px`;
     root.style.marginLeft = "auto";
     root.style.marginRight = "auto";
@@ -588,6 +779,8 @@
 
       const state = {
         theme,
+        locale,
+        uiText: getUiText(locale),
         mode: getViewportMode(root.clientWidth || 0, config),
         visibleCount: getInitialVisible(getViewportMode(root.clientWidth || 0, config), config),
         expanded: new Set()
@@ -596,13 +789,17 @@
       renderWidget(root, data, state, config);
 
       const resizeObserver = new ResizeObserver(() => {
-        applyMasonryLayout(root, state, config);
+        if (config.viewMode === "carousel") {
+          updateCarousel(root, state, config);
+        } else {
+          applyMasonryLayout(root, state, config);
+        }
       });
       resizeObserver.observe(root);
 
       root.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
         const action = target.getAttribute("data-action");
 
         if (action === "toggle") {
@@ -618,7 +815,7 @@
         }
 
         if (action === "load-more") {
-          const filteredCount = (Array.isArray(data.reviews) ? data.reviews : []).filter((review) => {
+          const filteredCount = dedupeReviews(data.reviews).filter((review) => {
             const rating = Number(review?.rating) || 0;
             if (rating < config.minStars) return false;
             if (!config.showNoTextReviews && String(review?.text || "").trim().length === 0) return false;
@@ -626,8 +823,50 @@
           }).length;
           state.visibleCount = Math.min(filteredCount, state.visibleCount + getBatchSize(state.mode, config));
           renderWidget(root, data, state, config);
+          return;
+        }
+
+        if (action === "next") {
+          state.carouselIndex = (state.carouselIndex || 0) + 1;
+          updateCarousel(root, state, config);
+          return;
+        }
+
+        if (action === "prev") {
+          state.carouselIndex = Math.max(0, (state.carouselIndex || 0) - 1);
+          updateCarousel(root, state, config);
+          return;
         }
       });
+
+      if (config.viewMode === "carousel") {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        root.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+        root.addEventListener("touchend", (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          const diff = touchEndX - touchStartX;
+          const isRtl = root.getAttribute("dir") === "rtl";
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+              // Swipe right
+              if (isRtl) {
+                state.carouselIndex = (state.carouselIndex || 0) + 1;
+              } else {
+                state.carouselIndex = Math.max(0, (state.carouselIndex || 0) - 1);
+              }
+            } else {
+              // Swipe left
+              if (isRtl) {
+                state.carouselIndex = Math.max(0, (state.carouselIndex || 0) - 1);
+              } else {
+                state.carouselIndex = (state.carouselIndex || 0) + 1;
+              }
+            }
+            updateCarousel(root, state, config);
+          }
+        }, { passive: true });
+      }
     } catch (error) {
       console.error("[google-reviews-widget] Failed to render widget:", error);
       root.innerHTML = "";
